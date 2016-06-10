@@ -137,10 +137,9 @@ void consoleLogN(int n) {
 }
 
 void CustomExternalStringResource::writeTo(Handle<String> str, MDB_val *val) {
-    unsigned int l = str->Length() + 1;
+    unsigned int l = str->Length();
     uint16_t *d = new uint16_t[l];
     str->Write(d);
-    d[l - 1] = 0;
 
     val->mv_data = d;
     val->mv_size = l * sizeof(uint16_t);
@@ -150,14 +149,14 @@ CustomExternalStringResource::CustomExternalStringResource(MDB_val *val) {
     // The UTF-16 data
     this->d = (uint16_t*)(val->mv_data);
     // Number of UTF-16 characters in the string
-    this->l = (val->mv_size / sizeof(uint16_t) - 1);
+    this->l = val->mv_size / sizeof(uint16_t);
 }
 
 CustomExternalStringResource::~CustomExternalStringResource() { }
 
 void CustomExternalStringResource::Dispose() {
     // No need to do anything, the data is owned by LMDB, not us
-    
+
     // But actually need to delete the string resource itself:
     // the docs say that "The default implementation will use the delete operator."
     // while initially I thought this means using delete on the string,
