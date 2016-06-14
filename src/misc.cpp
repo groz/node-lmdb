@@ -136,23 +136,31 @@ void consoleLogN(int n) {
     consoleLog(c);
 }
 
+/*
+Making LMDB compatible with other languages by converting strings to UTF-8.
+Alas, this means no zero-copy semantics because strings are UTF-16 in Javascript.
+*/
 void CustomExternalStringResource::writeTo(Handle<String> str, MDB_val *val) {
-    unsigned int l = str->Length();
-    uint16_t *d = new uint16_t[l];
-    str->Write(d);
-
+    char *inp = *Nan::Utf8String(*str);
+    int len = strlen(inp);
+    char *d = new char[len];
+    strcpy(d, inp);
     val->mv_data = d;
-    val->mv_size = l * sizeof(uint16_t);
+    val->mv_size = len;
 }
 
 CustomExternalStringResource::CustomExternalStringResource(MDB_val *val) {
-    // The UTF-16 data
-    this->d = (uint16_t*)(val->mv_data);
-    // Number of UTF-16 characters in the string
-    this->l = val->mv_size / sizeof(uint16_t);
+    Local<String> str = String::New((char*)val->mv_data);
+    uint16_t *d = new uint16_t[str->Length()];
+    str->Write(d);
+    this->d = d;
+    this->l = str->Length();
 }
 
-CustomExternalStringResource::~CustomExternalStringResource() { }
+CustomExternalStringResource::~CustomExternalStringResource() {
+    // TODO: alter this if zero-copy semantics is reintroduced above
+    delete [] d;
+}
 
 void CustomExternalStringResource::Dispose() {
     // No need to do anything, the data is owned by LMDB, not us
