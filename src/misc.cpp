@@ -137,24 +137,37 @@ void consoleLogN(int n) {
 }
 
 /*
+Writing string to LMDB.
 Making LMDB compatible with other languages by converting strings to UTF-8.
 Alas, this means no zero-copy semantics because strings are UTF-16 in Javascript.
 */
 void CustomExternalStringResource::writeTo(Handle<String> str, MDB_val *val) {
-    char *inp = *Nan::Utf8String(*str);
+    String::Utf8Value utf8(str);
+    char *inp = *utf8;
     int len = strlen(inp);
+
     char *d = new char[len];
     strcpy(d, inp);
+
     val->mv_data = d;
     val->mv_size = len;
 }
 
+/*
+Reading string from LMDB.
+It will be utf-8 encoded, so decoding here into utf-16.
+*/
 CustomExternalStringResource::CustomExternalStringResource(MDB_val *val) {
     Local<String> str = String::New((char*)val->mv_data);
-    uint16_t *d = new uint16_t[str->Length()];
+    int len = str->Length();
+    
+    uint16_t *d = new uint16_t[len];
     str->Write(d);
+
+    d[len-1] = 0;
+
     this->d = d;
-    this->l = str->Length();
+    this->l = len;
 }
 
 CustomExternalStringResource::~CustomExternalStringResource() {
