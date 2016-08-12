@@ -169,7 +169,8 @@ CustomExternalStringResource::CustomExternalStringResource(MDB_val *val) {
 
     // write into output buffer
     int len = jsString->Length();
-    uint16_t *d = new uint16_t[len];
+
+    uint16_t *d = new uint16_t[len + 1];
     jsString->Write(d);
     this->d = d;
     this->l = len;
