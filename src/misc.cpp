@@ -158,14 +158,19 @@ Reading string from LMDB.
 It will be utf-8 encoded, so decoding here into utf-16.
 */
 CustomExternalStringResource::CustomExternalStringResource(MDB_val *val) {
-    Local<String> str = String::New((char*)val->mv_data);
-    int len = str->Length();
-    
+    // appending '\0' to input to feed into String::New
+    char *tmp = new char[val->mv_size + 1];
+    memcpy(tmp, val->mv_data, val->mv_size);
+    tmp[val->mv_size] = 0;
+
+    // convert utf8 -> utf16
+    Local<String> jsString = String::New(tmp);
+    delete [] tmp;
+
+    // write into output buffer
+    int len = jsString->Length();
     uint16_t *d = new uint16_t[len];
-    str->Write(d);
-
-    d[len-1] = 0;
-
+    jsString->Write(d);
     this->d = d;
     this->l = len;
 }
