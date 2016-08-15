@@ -146,7 +146,7 @@ void CustomExternalStringResource::writeTo(Handle<String> str, MDB_val *val) {
     char *inp = *utf8;
     int len = strlen(inp);
 
-    char *d = new char[len];
+    char *d = new char[len + 1];
     strcpy(d, inp);
 
     val->mv_data = d;
@@ -173,7 +173,7 @@ CustomExternalStringResource::CustomExternalStringResource(MDB_val *val) {
     uint16_t *d = new uint16_t[len + 1];
     jsString->Write(d);
     this->d = d;
-    this->l = len + 1;
+    this->l = len;
 }
 
 CustomExternalStringResource::~CustomExternalStringResource() {
